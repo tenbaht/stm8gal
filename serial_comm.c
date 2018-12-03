@@ -16,6 +16,7 @@
 #include "serial_comm.h"
 #include "misc.h"
 #include "globals.h"
+#include "main.h"
 #if defined(__ARMEL__) && defined(USE_WIRING)
   #include <wiringPi.h>       // for reset via GPIO
 #endif // __ARMEL__ && USE_WIRING
@@ -536,6 +537,7 @@ void get_port_attribute(HANDLE fpCom, uint32_t *baudrate, uint32_t *timeout, uin
   change attributes of an already open comm port.
 */
 void set_port_attribute(HANDLE fpCom, uint32_t baudrate, uint32_t timeout, uint8_t numBits, uint8_t parity, uint8_t numStop, uint8_t RTS, uint8_t DTR) {
+
   
 /////////
 // Win32
@@ -1038,7 +1040,16 @@ void flush_port(HANDLE fpCom) {
 #ifdef WIN32
 
   // purge all port buffers (see http://msdn.microsoft.com/en-us/library/windows/desktop/aa363428%28v=vs.85%29.aspx)
-  PurgeComm(fpCom, PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
+  //PurgeComm(fpCom, PURGE_RXABORT | PURGE_RXCLEAR | PURGE_TXABORT | PURGE_TXCLEAR);
+  
+  // read buffer until empty
+  int   len;
+  char  c;
+  set_timeout(fpCom, 1);
+  do
+    len = receive_port(fpCom, 0, 1, &c);
+  while (len);
+  set_timeout(fpCom, TIMEOUT);
 
 #endif // WIN32
 

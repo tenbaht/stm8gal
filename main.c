@@ -516,7 +516,7 @@ int main(int argc, char ** argv) {
     if (g_verbose == 2)
       printf("  open serial port '%s' with %gkBaud ... ", portname, (float) baudrate / 1000.0);
     fflush(stdout);
-    ptrPort = init_port(portname, baudrate, TIMEOUT, 8, 0, 1, 0, 0);   // start without parity, may be changed in bsl_sync()
+    ptrPort = init_port(portname, baudrate, TIMEOUT, 8, 2, 1, 0, 0);   // xxx start without parity, may be changed in bsl_sync()
     if (g_verbose == 2)
       printf("ok\n");
     fflush(stdout);
@@ -596,7 +596,7 @@ int main(int argc, char ** argv) {
   
  
   // debug: communication test (echo+1 test-SW on STM8)
-  /*
+ /*
   printf("open: %d\n", ptrPort);
   for (i=0; i<254; i++) {
     Tx[0] = i;
@@ -618,9 +618,10 @@ int main(int argc, char ** argv) {
   flush_port(ptrPort);
   
   // synchronize with bootloader. For UART also sync baudrate
-  bsl_sync(ptrPort, physInterface);
+  //bsl_sync(ptrPort, physInterface);
   
   // for UART set or auto-detect UART mode (0=duplex, 1=1-wire, 2=2-wire reply, others=auto-detect)
+  /*
   if (physInterface == 0) {
     if (uartMode == 0)
       set_parity(ptrPort, 2);
@@ -633,8 +634,48 @@ int main(int argc, char ** argv) {
     }
     else
       uartMode = bsl_getUartMode(ptrPort);
+
+    // just to make sure
+    flush_port(ptrPort); 
+    SLEEP(50);
+
   } // UART interface
-  
+  */
+
+////////////////////////
+////////////////////////
+////////////////////////
+
+    if (uartMode==0)
+      set_parity(ptrPort, 2);
+    else
+      set_parity(ptrPort, 0);
+    set_timeout(ptrPort, 100);
+    flush_port(ptrPort);
+
+    buf[0] = SYNCH;
+    send_port(ptrPort, 0, 1, buf);
+    i = receive_port(ptrPort, 0, 1, buf);
+    printf("\nsync: %d  0x%02X\n", i, buf[j]);
+    SLEEP(200);
+
+    do {
+      buf[0] = 0x00;
+      buf[1] = 0xFF;
+      send_port(ptrPort, 0, 2, buf);
+      i = receive_port(ptrPort, 0, 1, buf);
+      printf("\ntest: len=%d\n", i);
+      for (j=0; j<i; j++)
+        printf("   %d  0x%02X\n", i, buf[j]);
+      SLEEP(200);
+    } while (1);
+    exit(1);
+
+////////////////////////
+////////////////////////
+////////////////////////
+
+
   // get bootloader info for selecting RAM w/e routines for flash
   bsl_getInfo(ptrPort, physInterface, uartMode, &flashsize, &versBSL, &family);
 
