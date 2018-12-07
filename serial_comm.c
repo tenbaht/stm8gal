@@ -659,8 +659,9 @@ void set_port_attribute(HANDLE fpCom, uint32_t baudrate, uint32_t timeout, uint8
   cfsetospeed(&toptions, brate);    // send
   
   // number of data bits
+  toptions.c_cflag &= ~CSIZE;       // clear data bits entry
   if (numBits == 7)
-    toptions.c_cflag |=  CS7;       // 8 data bits
+    toptions.c_cflag |=  CS7;       // 7 data bits
   else if (numBits == 8)
     toptions.c_cflag |=  CS8;       // 8 data bits
   else {
@@ -692,10 +693,6 @@ void set_port_attribute(HANDLE fpCom, uint32_t baudrate, uint32_t timeout, uint8
   else
     toptions.c_cflag |= CSTOPB;     // two stop bit
   
-  // set 8 data bits
-  toptions.c_cflag &= ~CSIZE;       // clear data bits entry
-  toptions.c_cflag |= CS8;          // set 8 data bits
-
   // disable flow control
   toptions.c_cflag &= ~CRTSCTS;
   toptions.c_cflag |= CREAD | CLOCAL;  // turn on READ & ignore ctrl lines
